@@ -1,5 +1,7 @@
 module TSanalysis
 
+using Debug
+
 export ami_calc
 
 function range(x::Vector{Float64})
@@ -9,6 +11,19 @@ end
 function double_hist(series::Vector{Float64}, lag::Int64, partitions::Int64)
     # return a double histogram of the probabilities of observations,
     # considering the specified lag.
+    hist = zeros(partitions, partitions)
+    len = length(series)
+    cont = 0
+    for i = 1:(len - lag)
+        j = i + lag
+        binx = max(ceil(series[i]*partitions),1)
+        biny = max(ceil(series[j]*partitions),1)
+        binx = min(binx, partitions)
+        biny = min(biny, partitions)
+        hist[binx,biny] += 1
+        cont += 1
+    end
+    return hist / sum(hist)
 end
 
 function ami_calc(dataset::Matrix{Float64}; partitions::Int64 = 16, lagmax::Int64 = 20)
@@ -18,15 +33,15 @@ function ami_calc(dataset::Matrix{Float64}; partitions::Int64 = 16, lagmax::Int6
     A = zeros(lagmax,n)
     for i in 1:n
         series = D[:,i]
-        series = (series - min(series)) / diff(range(series))
-        corr = zeros(lagmax)
+        series = (series - min(series)) / (max(series) - min(series))
         for j in 1:lagmax
-            hist = zeros(partitions, partitions)
-
+            hist = double_hist(series, j, partitions)
+            histx = nonzeros(vec(sum(hist,1)))
+            hist = nonzeros(vec(hist))
+            A[j,i] = sum(hist .* log(hist)) - 2 * sum(histx .* log(histx))
         end
-        break
     end
-    #@show A
+    return A'
 end
 
 srand(1234)
