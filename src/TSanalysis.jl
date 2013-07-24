@@ -11,17 +11,15 @@ end
 function double_hist(series::Vector{Float64}, lag::Int64, partitions::Int64)
     # return a double histogram of the probabilities of observations,
     # considering the specified lag.
-    hist = zeros(partitions, partitions)
+    hist = zeros(Float64,partitions, partitions)
     len = length(series)
-    cont = 0
     for i = 1:(len - lag)
         j = i + lag
         binx = max(ceil(series[i]*partitions),1)
         biny = max(ceil(series[j]*partitions),1)
         binx = min(binx, partitions)
         biny = min(biny, partitions)
-        hist[binx,biny] += 1
-        cont += 1
+        hist[binx,biny] += 1.
     end
     return hist / sum(hist)
 end
