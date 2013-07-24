@@ -1,6 +1,6 @@
 module TSanalysis
 
-using Debug
+#using Debug
 
 export ami_calc
 
@@ -11,7 +11,7 @@ end
 function double_hist(series::Vector{Float64}, lag::Int64, partitions::Int64)
     # return a double histogram of the probabilities of observations,
     # considering the specified lag.
-    hist = zeros(Float64,partitions, partitions)
+    hist = zeros(Float64, partitions, partitions)
     len = length(series)
     for i = 1:(len - lag)
         j = i + lag
@@ -24,16 +24,17 @@ function double_hist(series::Vector{Float64}, lag::Int64, partitions::Int64)
     return hist / sum(hist)
 end
 
-function ami_calc(dataset::Matrix{Float64}; partitions::Int64 = 16, lagmax::Int64 = 20)
+function ami_calc(dataset::Matrix{Float64}; partitions::Int64 = 16, ncoef::Int64 = 20)
     # we will operate on columns:
+    lagmax = ncoef - 1 # so we also compute lag = 0 
     D = dataset'
     n = size(D)[2]
-    A = zeros(lagmax,n)
+    A = zeros(Float64,lagmax+1,n)
     for i in 1:n
         series = D[:,i]
         series = (series - min(series)) / (max(series) - min(series))
-        for j in 1:lagmax
-            hist = double_hist(series, j, partitions)
+        for j in 1:(lagmax+1)
+            hist = double_hist(series, j-1, partitions)
             histx = nonzeros(vec(sum(hist,1)))
             hist = nonzeros(vec(hist))
             A[j,i] = sum(hist .* log(hist)) - 2 * sum(histx .* log(histx))
