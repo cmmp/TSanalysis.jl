@@ -43,12 +43,12 @@ function ami_calc(dataset::Matrix{Float64}; partitions::Int64 = 16, ncoef::Int64
     return A'
 end
 
-srand(1234)
+#srand(1234)
 
-X = rand(10,100)
-T = rand(10, 100)
+#X = rand(10,100)
+#T = rand(10, 100)
 
-A = ami_calc(X)
+#A = ami_calc(X)
 
 #writedlm("ami.dat", X) 
 
