@@ -1,8 +1,9 @@
 module TSanalysis
 
 #using Debug
+import Stats.autocor
 
-export ami_calc
+export ami_calc, acf_calc
 
 function range(x::Vector{Float64})
     return [min(x), max(x)]
@@ -22,6 +23,16 @@ function double_hist(series::Vector{Float64}, lag::Int64, partitions::Int64)
         hist[binx,biny] += 1.
     end
     return hist / sum(hist)
+end
+
+function acf_calc(dataset::Matrix{Float64}; ncoef::Int64 = 20)
+    D = dataset'
+    n = size(D)[2]
+    A = zeros(Float64,ncoef,n)
+    for i in 1:n
+        A[:,i] = autocor(D[:,i], 1:ncoef)
+    end
+    return A'
 end
 
 function ami_calc(dataset::Matrix{Float64}; partitions::Int64 = 16, ncoef::Int64 = 20)
