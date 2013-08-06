@@ -55,9 +55,9 @@ function adx_calc(dataset::Matrix{Float64}; nperiods::Int64 = 14)
     nseries, ncol = size(D)
 
     # each row of D consists of [high | low | close]
-    nlen = ncol / 3
+    nlen = int64(ncol / 3)
 
-    ADX = zeros(Float64, nseries, int64(nlen) - nperiods)
+    ADX = zeros(Float64, nseries, nlen - nperiods)
 
     # reference: http://en.wikipedia.org/wiki/Average_directional_movement_index
 
