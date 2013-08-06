@@ -53,10 +53,11 @@ end
 function adx_calc(dataset::Matrix{Float64}; nperiods::Int64 = 14)
     D = dataset
     nseries, ncol = size(D)
-    A = zeros(Float64, nseries, 1)
 
     # each row of D consists of [high | low | close]
     nlen = ncol / 3
+
+    ADX = zeros(Float64, nseries, int64(nlen) - nperiods)
 
     # reference: http://en.wikipedia.org/wiki/Average_directional_movement_index
 
@@ -66,8 +67,8 @@ function adx_calc(dataset::Matrix{Float64}; nperiods::Int64 = 14)
         lows = D[i,(nlen+1):(2*nlen)]
         closes = D[i,(2*nlen+1):ncol]
 
-        upmove = float64([highs[i] - highs[i-1] for i = 2:nlen])
-        downmove = float64([lows[i-1] - lows[i] for i = 2:nlen])
+        upmove = float64([highs[j] - highs[j-1] for j = 2:nlen])
+        downmove = float64([lows[j-1] - lows[j] for j = 2:nlen])
 
         # compute +DM and -DM:
         mask = (upmove .> downmove) & (upmove .> 0.)
@@ -80,13 +81,25 @@ function adx_calc(dataset::Matrix{Float64}; nperiods::Int64 = 14)
 
         # compute the Average True Range (ATR): 
         # reference: http://en.wikipedia.org/wiki/Average_true_range
+        truerange = zeros(size(upmove))
+        for j = 2:length(truerange)
+            truerange[j] = max(highs[j] - lows[j], abs(highs[j] - closes[j-1]), abs(lows[j] - closes[j-1]))
+        end
 
+        ATR = ewma(truerange, nperiods = nperiods) # ewma of the true range --> Average True Range
+
+        ApDM = ewma(pDM, nperiods = nperiods) # ewma of +DM
+        AmDM = ewma(mDM, nperiods = nperiods) # ewma of -DM
 
         # compute +DI and -DI:
 
+        pDI = 100.0 * (ApDM ./ ATR)
+        mDI = 100.0 * (AmDM ./ ATR)
+
+        ADX[i,:] = 100.0 * abs(pDI .- mDI) ./ (pDI .+ mDI)
     end
 
-    return A
+    return ADX
 end
 
 function acf_calc(dataset::Matrix{Float64}; ncoef::Int64 = 20)
