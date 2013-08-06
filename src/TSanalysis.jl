@@ -6,17 +6,28 @@ import Stats.autocor
 export ami_calc, acf_calc, adx_calc
 
 function sma(x::Vector{Float64}; nperiods::Int64 = 14)
-    n = length(x)
-    ret = zeros(n - nperiods + 1)
-    m = length(ret)
+    ret::Vector{Float64} = zeros(length(x) - nperiods + 1)
     j = 1
-    for i = 1:m
-        mask = falses(n)
-        mask[j:(j+nperiods-1)] = true
+    for i = 1:length(ret)
+        ret[i] = sum(x[j:(j+nperiods-1)]) / nperiods
         j += 1
-        ret[i] = sum(x[mask]) / nperiods
     end
     return ret
+end
+
+function ewma(x::Vector{Float64}; nperiods::Int64 = 14)
+    y::Vector{Float64} = sma(x, nperiods = nperiods)
+
+    mult = 2. / (nperiods + 1)
+
+    j = nperiods + 1
+
+    for i = 2:length(y)
+        y[i] = (x[j] - y[i-1]) * mult + y[i-1]
+        j += 1
+    end
+   
+    return y
 end
 
 function range(x::Vector{Float64})

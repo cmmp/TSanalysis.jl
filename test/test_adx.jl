@@ -16,13 +16,12 @@ sma10exp = vec([22.22 22.21 22.23 22.26 22.31 22.42 22.61 22.77 22.91 23.08 23.2
 
 smagot = TSanalysis.sma(x, nperiods = 10)
 
-#@show sma10exp
-#@show round(smagot,2)
-
 @test_approx_eq_eps sma10exp smagot e-2
 
 ewma10exp = vec([22.22 22.21 22.24 22.27 22.33 22.52 22.80 22.97 23.13 23.28 23.34 23.43 23.51 23.54 23.47 23.40 23.39 23.26 23.23 23.08 22.92])
 
-#@test_approx_eq_eps Aexp Agot e-2
+ewmagot = TSanalysis.ewma(x, nperiods = 10)
+
+@test_approx_eq_eps ewma10exp ewmagot e-2
 
 end
