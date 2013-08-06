@@ -3,7 +3,21 @@ module TSanalysis
 #using Debug
 import Stats.autocor
 
-export ami_calc, acf_calc
+export ami_calc, acf_calc, adx_calc
+
+function sma(x::Vector{Float64}; nperiods::Int64 = 14)
+    n = length(x)
+    ret = zeros(n - nperiods + 1)
+    m = length(ret)
+    j = 1
+    for i = 1:m
+        mask = falses(n)
+        mask[j:(j+nperiods-1)] = true
+        j += 1
+        ret[i] = sum(x[mask]) / nperiods
+    end
+    return ret
+end
 
 function range(x::Vector{Float64})
     return [min(x), max(x)]
@@ -23,6 +37,45 @@ function double_hist(series::Vector{Float64}, lag::Int64, partitions::Int64)
         hist[binx,biny] += 1.
     end
     return hist / sum(hist)
+end
+
+function adx_calc(dataset::Matrix{Float64}; nperiods::Int64 = 14)
+    D = dataset
+    nseries, ncol = size(D)
+    A = zeros(Float64, nseries, 1)
+
+    # each row of D consists of [high | low | close]
+    nlen = ncol / 3
+
+    # reference: http://en.wikipedia.org/wiki/Average_directional_movement_index
+
+    for i = 1:nseries
+        # get the separate series:
+        highs = D[i,1:nlen]
+        lows = D[i,(nlen+1):(2*nlen)]
+        closes = D[i,(2*nlen+1):ncol]
+
+        upmove = float64([highs[i] - highs[i-1] for i = 2:nlen])
+        downmove = float64([lows[i-1] - lows[i] for i = 2:nlen])
+
+        # compute +DM and -DM:
+        mask = (upmove .> downmove) & (upmove .> 0.)
+        pDM = copy(upmove) # +DM
+        pDM[!mask] = 0.
+
+        mask = (downmove .> upmove) & (downmove .> 0.)
+        mDM = copy(downmove) # -DM
+        mDM[!mask] = 0.
+
+        # compute the Average True Range (ATR): 
+        # reference: http://en.wikipedia.org/wiki/Average_true_range
+
+
+        # compute +DI and -DI:
+
+    end
+
+    return A
 end
 
 function acf_calc(dataset::Matrix{Float64}; ncoef::Int64 = 20)
