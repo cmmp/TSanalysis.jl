@@ -57,7 +57,7 @@ function adx_calc(dataset::Matrix{Float64}; nperiods::Int64 = 14)
     # each row of D consists of [high | low | close]
     nlen = int64(ncol / 3)
 
-    ADX = zeros(Float64, nseries, nlen - nperiods)
+    ADX = zeros(Float64, nseries, (nlen - nperiods) - nperiods + 1)
 
     # reference: http://en.wikipedia.org/wiki/Average_directional_movement_index
 
@@ -96,7 +96,11 @@ function adx_calc(dataset::Matrix{Float64}; nperiods::Int64 = 14)
         pDI = 100.0 * (ApDM ./ ATR)
         mDI = 100.0 * (AmDM ./ ATR)
 
-        ADX[i,:] = 100.0 * abs(pDI .- mDI) ./ (pDI .+ mDI)
+        series = abs(pDI .- mDI) ./ (pDI .+ mDI)
+        series[isnan(series)] = 0 # it may happen we divide by zero
+
+        ADX[i,:] = 100.0 * ewma(series, nperiods = nperiods)
+
     end
 
     return ADX
